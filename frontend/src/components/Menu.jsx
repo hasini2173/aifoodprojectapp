@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { getMenus, addItemToMenu, createMenu } from "../redux/actions/menuActions"; // ✅ FIXED IMPORT
 import { getRestaurants } from "../redux/actions/restaurantAction";
 import Fooditem from "./Fooditem";
-import axios from "axios";
+import api from "../utils/api";
 
 const Menu = () => {
   const { id } = useParams();
@@ -38,13 +38,13 @@ const Menu = () => {
 
   // fetch food items
   const fetchItems = async () => {
-    try {
-      const { data } = await axios.get(`/api/v1/eats/items/${id}`);
-      setAvailableItems(data.data);
-    } catch (err) {
-      console.error("failed to load items", err);
-    }
-  };
+  try {
+    const { data } = await api.get(`/v1/eats/items/${id}`);
+    setAvailableItems(data.data);
+  } catch (err) {
+    console.error("failed to load items", err);
+  }
+};
 
   // FIXED createMenu
   const submitMenuCreation = async (e) => {
@@ -63,41 +63,43 @@ const Menu = () => {
   };
 
   const submitNewFood = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        ...newFood,
-        price: parseFloat(newFood.price) || 0,
-        stock: parseInt(newFood.stock) || 0,
-        restaurant: id,
-      };
+  e.preventDefault();
 
-      const { data } = await axios.post("/api/v1/eats/item", payload, {
-        headers: { "Content-Type": "application/json" },
-        withCredentials: true,
-      });
+  try {
+    const payload = {
+      ...newFood,
+      price: parseFloat(newFood.price) || 0,
+      stock: parseInt(newFood.stock) || 0,
+      restaurant: id,
+    };
 
-      const created = data.data;
+    const { data } = await api.post("/v1/eats/item", payload, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
-      setAvailableItems((prev) => [...prev, created]);
-      setItemToAdd({ ...itemToAdd, foodItemId: created._id });
+    const created = data.data;
 
-      setCreatingFood(false);
-      setNewFood({
-        name: "",
-        price: "",
-        description: "",
-        stock: "",
-        imageUrl: "",
-      });
+    setAvailableItems((prev) => [...prev, created]);
+    setItemToAdd({ ...itemToAdd, foodItemId: created._id });
 
-      return created;
-    } catch (err) {
-      console.error("unable to create food item", err);
-      alert(err.response?.data?.message || err.message);
-      return null;
-    }
-  };
+    setCreatingFood(false);
+    setNewFood({
+      name: "",
+      price: "",
+      description: "",
+      stock: "",
+      imageUrl: "",
+    });
+
+    return created;
+  } catch (err) {
+    console.error("unable to create food item", err);
+    alert(err.response?.data?.message || err.message);
+    return null;
+  }
+};
 
   return (
     <div>
@@ -108,20 +110,18 @@ const Menu = () => {
       ) : menus && menus.length > 0 ? (
         menus.map((menu) => {
           const deleteMenu = async () => {
-            if (!window.confirm("Delete this menu category?")) return;
-            try {
-              await axios.delete(
-                `/api/v1/eats/stores/${id}/menus/${menu._id}`,
-                {
-                  withCredentials: true,
-                }
-              );
-              dispatch(getMenus(id));
-            } catch (err) {
-              console.error(err);
-              alert(err.response?.data?.message || "Unable to delete menu");
-            }
-          };
+  if (!window.confirm("Delete this menu category?")) return;
+
+  try {
+    await api.delete(`/v1/eats/stores/${id}/menus/${menu._id}`);
+
+    dispatch(getMenus(id));
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.message || "Unable to delete menu");
+  }
+};
+          
 
           return (
             <div key={menu._id}>
@@ -316,28 +316,30 @@ const Menu = () => {
                   type="button"
                   className="btn btn-sm btn-info ml-2"
                   onClick={async () => {
-                    if (!newFood.name) return alert("Enter name first");
+  if (!newFood.name) {
+    return alert("Enter name first");
+  }
 
-                    try {
-                      const { data } = await axios.post(
-                        "/api/v1/ai/generate-food-ai",
-                        {
-                          name: newFood.name,
-                          category: itemToAdd.category || "",
-                          spiceLevel: "Medium",
-                          price: newFood.price || 0,
-                        },
-                        { withCredentials: true }
-                      );
+  try {
+    const { data } = await api.post("/v1/ai/generate-food-ai", {
+      name: newFood.name,
+      category: itemToAdd.category || "",
+      spiceLevel: "Medium",
+      price: Number(newFood.price) || 0,
+    });
 
-                      setNewFood({
-                        ...newFood,
-                        description: data.data.description,
-                      });
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
+    setNewFood((prev) => ({
+      ...prev,
+      description: data.data.description,
+    }));
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.message || "Unable to generate description");
+  }
+}}
+                  
+
+                     
                 >
                   AI desc
                 </button>
