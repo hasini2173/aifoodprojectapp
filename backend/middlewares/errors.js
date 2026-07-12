@@ -36,19 +36,17 @@ module.exports = (err, req, res, next) => {
     error = new ErrorHandler(message, 400);
   }
 
-  if (process.env.NODE_ENV === "DEVELOPMENT") {
-    res.status(error.statusCode).json({
-      success: false,
-      error: error,
-      errMessage: error.message,
-      stack: error.stack,
-    });
-  }
+  if (process.env.NODE_ENV === "development") {
+  return res.status(error.statusCode).json({
+    success: false,
+    error,
+    errMessage: error.message,
+    stack: error.stack,
+  });
+}
 
-  if (process.env.NODE_ENV === "PRODUCTION") {
-    res.status(error.statusCode).json({
-      success: false,
-      message: error.message || "Internal Server Error",
-    });
-  }
+return res.status(error.statusCode).json({
+  success: false,
+  message: error.message || "Internal Server Error",
+});
 };
