@@ -85,10 +85,10 @@ exports.login = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 
 });
-
-
 // Protect Route
 exports.protect = catchAsyncErrors(async (req, res, next) => {
+
+  console.log("1. protect started");
 
   let token;
 
@@ -97,12 +97,14 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
     req.headers.authorization.startsWith("Bearer")
   ) {
     token = req.headers.authorization.split(" ")[1];
-  } 
-  else if (req.cookies.jwt) {
+  } else if (req.cookies.jwt) {
     token = req.cookies.jwt;
   }
 
+  console.log("2. Token:", token);
+
   if (!token) {
+    console.log("3. No token");
     return next(
       new ErrorHandler(
         "You are not logged in! Please log in to get access.",
@@ -111,39 +113,105 @@ exports.protect = catchAsyncErrors(async (req, res, next) => {
     );
   }
 
-  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log("4. Verifying token");
+
+  const decoded = await promisify(jwt.verify)(
+    token,
+    process.env.JWT_SECRET
+  );
+
+  console.log("5. Decoded:", decoded);
 
   const currentUser = await User.findById(decoded.id);
 
-if (!currentUser) {
-  return next(
-    new ErrorHandler(
-      "User no longer exists. Please login again.",
-      401
-    )
-  );
-}
+  console.log("6. Current User:", currentUser);
 
-  if (currentUser.changedPasswordAfter(decoded.iat)) {
-
+  if (!currentUser) {
     return next(
       new ErrorHandler(
-        "User recently changed password ! please log in again.",
-        404
+        "User no longer exists. Please login again.",
+        401
+      )
+    );
+  }
+
+  if (currentUser.changedPasswordAfter(decoded.iat)) {
+    return next(
+      new ErrorHandler(
+        "User recently changed password! Please log in again.",
+        401
       )
     );
   }
 
   req.user = currentUser;
 
+  console.log("7. Calling next()");
   next();
 });
+
+
+// // Protect Route
+// exports.protect = catchAsyncErrors(async (req, res, next) => {
+
+//   let token;
+
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//   } 
+//   else if (req.cookies.jwt) {
+//     token = req.cookies.jwt;
+//   }
+
+//   if (!token) {
+//     return next(
+//       new ErrorHandler(
+//         "You are not logged in! Please log in to get access.",
+//         401
+//       )
+//     );
+//   }
+
+//   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+//   const currentUser = await User.findById(decoded.id);
+
+// if (!currentUser) {
+//   return next(
+//     new ErrorHandler(
+//       "User no longer exists. Please login again.",
+//       401
+//     )
+//   );
+// }
+
+//   if (currentUser.changedPasswordAfter(decoded.iat)) {
+
+//     return next(
+//       new ErrorHandler(
+//         "User recently changed password ! please log in again.",
+//         404
+//       )
+//     );
+//   }
+
+//   req.user = currentUser;
+
+//   next();
+// });
 
 
 // Get profile
 exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
 
+  console.log("8. Entered getUserProfile");
+
   const user = await User.findById(req.user.id);
+
+  console.log("9. Sending response");
 
   res.status(200).json({
     success: true,
