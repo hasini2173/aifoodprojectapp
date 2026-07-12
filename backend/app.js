@@ -13,10 +13,13 @@ const errorMiddleware = require("./middlewares/errors");
 
 app.use(
   cors({
-    // origin: "https://genie-food-app.netlify.app",
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "https://aifoodprojectapp.vercel.app",
+    ],
     credentials: true,
-  }),
+  })
 );
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -33,6 +36,7 @@ app.use("/proxy", (req, res) => {
   var url = "https://checkout.stripe.com" + req.url;
   req.pipe(request(url)).pipe(res);
 });
+const request = require("request");
 
 //Import all routes
 const foodRouter = require("./routes/foodItem");
