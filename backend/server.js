@@ -13,8 +13,13 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-//setting up config file
-dotenv.config({ path: "./config/config.env" });
+// Setting up config file
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: "./config/config.env" });
+} else {
+  dotenv.config();
+}
+
 
 //connecting to database
 connectDatabase();
