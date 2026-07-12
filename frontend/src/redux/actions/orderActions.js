@@ -37,30 +37,35 @@ export const createOrder = (session_id) => async(dispatch) =>{
 }
 
 
-//payment
-export const payment = (items,restaurant) => async(dispatch) =>{
-    try{
+// payment
+export const payment = (items, restaurant) => async (dispatch) => {
+  try {
+    dispatch(paymentRequest());
 
-        dispatch(paymentRequest());
-        const {data} = await api.post("/v1/payment/process",{items, restaurant},
-            {
-                headers:{
-                    "Content-Type": "application/json"
-                }
-            }
-        )
+    const { data } = await api.post(
+      "/v1/payment/process",
+      { items, restaurant },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-        if(data.url){
-            window.location.assign(data.url)
-        }
+    // 👇 ADD THIS
+    console.log("Payment Response:", data);
 
-        dispatch(paymentSuccess())
-
-    }catch(error)
-    {
-       dispatch(paymentFail(error.response?.data?.message))
+    if (data.url) {
+      window.location.assign(data.url);
     }
-}
+
+    dispatch(paymentSuccess());
+
+  } catch (error) {
+    console.log("Payment Error:", error.response);
+    dispatch(paymentFail(error.response?.data?.message));
+  }
+};
 
 //my orders
 export const myOrders = () => async(dispatch) =>{
