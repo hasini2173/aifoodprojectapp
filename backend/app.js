@@ -32,11 +32,11 @@ app.use(fileUpload());
 //   api_key: process.env.CLOUDINARY_API_KEY,
 //   api_secret: process.env.CLOUDINARY_API_SECRET,
 // });
-app.use("/proxy", (req, res) => {
-  var url = "https://checkout.stripe.com" + req.url;
-  req.pipe(request(url)).pipe(res);
-});
-const request = require("request");
+// app.use("/proxy", (req, res) => {
+//   var url = "https://checkout.stripe.com" + req.url;
+//   req.pipe(request(url)).pipe(res);
+// });
+
 
 //Import all routes
 const foodRouter = require("./routes/foodItem");
